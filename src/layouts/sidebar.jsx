@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 export default function Sidebar({ children }) {
   const [isOpen, setIsOpen] = useState(true);
@@ -130,7 +131,9 @@ export default function Sidebar({ children }) {
             Sales Monitoring
           </div>
           <nav className="sidebar-nav">
-            <a href="#dashboard" className="nav-item active">Dashboard</a>
+            <Link to="/" className="nav-item">Dashboard</Link>
+            <Link to="/saleslog" className="nav-item">Sales Log</Link>
+            <Link to="/test-api" className="nav-item">Test API</Link>
           </nav>
         </aside>
 
