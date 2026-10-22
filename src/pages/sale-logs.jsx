@@ -1,35 +1,56 @@
 import React, { useState, useEffect } from 'react';
-import { getSalesOrders } from '../services/api'; // Ensure this matches your file path to api.js
+import { getSalesOrders, getApiMeta } from '../services/api';
 
 export default function SalesLogbook() {
   // Server-side and filter states
   const [salesData, setSalesData] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   // Filter inputs
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedBranch, setSelectedBranch] = useState('All');
+  const [selectedStatus, setSelectedStatus] = useState('All');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('All');
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(25); // Default to 25 items per page (max 100)
+  const [itemsPerPage, setItemsPerPage] = useState(25);
 
-  // Dropdown options matching API requirements
-  const branches = ['All', 'B10', 'B20', 'B30', 'B40']; // Adjust based on your meta endpoint if needed
-  const statuses = ['All', 'Open order', 'Delivered', 'Cancelled', 'Pending'];
+  // 1. Convert state to normal variables or states for branches/statuses
+  const [branches, setBranches] = useState(['All', 'A10', 'B20', 'C30', 'D40', 'E50', 'KK01', 'SDK02', 'TWU03']);
+  const [statuses, setStatuses] = useState(['All', 'Open order', 'Delivered', 'Cancelled', 'Invoiced']);
 
-  // Fetch data from API whenever filters, page, or page size change
+    // 2. Fetch metadata ONCE on component mount using useEffect
+    // **************************
+    // Now I would like to dynamically fetch the unique branches and statuses from the API instead of hardcoding them.
+    // But as this is an mock API, I will rely on just outright checking 1200 records to find unique values or hardcode them.
+    // Not that we can req 1200 records anyway due to 100 limit
+    // I personally would use a lookup table scheme, indexing or select query on the backend rather on the client side.
+    useEffect(() => {
+    getSalesOrders({ pageSize: 1200 })
+        .then((res) => {
+        const items = res.data || [];
+        if (items.length > 0) {
+            const uniqueSites = ['All', ...new Set(items.map(item => item.InventSiteId).filter(Boolean))];
+            const uniqueStatuses = ['All', ...new Set(items.map(item => item.DOT_ShowOrderStatus || item.SalesStatus).filter(Boolean))];
+            
+            setBranches(uniqueSites.sort());
+            setStatuses(uniqueStatuses.sort());
+        }
+        })
+        .catch((err) => console.warn('Could not load filter metadata', err));
+    }, []);
+
+  // 3. Fetch data from API whenever filters, page, or page size change
   useEffect(() => {
     let isMounted = true;
     setLoading(true);
     setError(null);
 
-    // Map component states to API query parameters
     const params = {
       page: currentPage,
       pageSize: itemsPerPage,
@@ -38,17 +59,16 @@ export default function SalesLogbook() {
     if (searchQuery.trim()) params.q = searchQuery.trim();
     if (selectedBranch !== 'All') params.site = selectedBranch;
     if (selectedStatus !== 'All') params.status = selectedStatus;
-    // Optional timeline filters if API supports them, otherwise handled client-side or omitted if backend ignores
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
 
     getSalesOrders(params)
       .then((res) => {
         if (isMounted) {
-          // Handles structure: { data: [...], total: number } or direct array depending on exact server schema
-          const items = res.data || res.items || (Array.isArray(res) ? res : []);
+          const items = res.data || [];
           setSalesData(items);
           setTotalCount(res.total || items.length);
+          setTotalPages(res.totalPages || Math.ceil((res.total || items.length) / itemsPerPage) || 1);
           setLoading(false);
         }
       })
@@ -65,10 +85,9 @@ export default function SalesLogbook() {
   }, [currentPage, itemsPerPage, searchQuery, selectedBranch, selectedStatus, startDate, endDate]);
 
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(amount || 0);
+    return new Intl.NumberFormat('en-MY', { style: 'currency', currency: 'MYR', maximumFractionDigits: 2 }).format(amount || 0);
   };
 
-  // Reset to page 1 on filter modifications
   const handleFilterChange = (setter) => (e) => {
     setter(e.target.value);
     setCurrentPage(1);
@@ -78,10 +97,6 @@ export default function SalesLogbook() {
     setItemsPerPage(Number(e.target.value));
     setCurrentPage(1);
   };
-
-  // Calculate total pages safely (capped at 100 max pages view standard)
-  const calculatedTotalPages = Math.ceil(totalCount / itemsPerPage) || 1;
-  const totalPages = Math.min(calculatedTotalPages, 100);
 
   return (
     <>
@@ -188,9 +203,10 @@ export default function SalesLogbook() {
           text-transform: uppercase;
         }
 
-        .badge.delivered, .badge.open { background-color: #d1fae5; color: #065f46; }
+        .badge.delivered, .badge.open-order { background-color: #d1fae5; color: #065f46; }
         .badge.pending { background-color: #fef3c7; color: #92400e; }
         .badge.cancelled { background-color: #fee2e2; color: #991b1b; }
+        .badge.invoiced { background-color: #dbeafe; color: #1e40af; }
 
         .details-btn {
           background-color: #f1f5f9;
@@ -309,7 +325,7 @@ export default function SalesLogbook() {
           </div>
 
           <div className="filter-field">
-            <label>Timeline (Date to Date)</label>
+            <label>Timeline (Shipping Date)</label>
             <div className="date-range-group">
               <input type="date" value={startDate} onChange={handleFilterChange(setStartDate)} />
               <span>to</span>
@@ -325,11 +341,11 @@ export default function SalesLogbook() {
               <thead>
                 <tr>
                   <th>Sales ID</th>
-                  <th>Customer</th>
+                  <th>Customer Name</th>
                   <th>Branch / Site</th>
-                  <th>Order Date</th>
+                  <th>Shipping Date</th>
                   <th>Status</th>
-                  <th>Amount</th>
+                  <th>Total Amount</th>
                   <th>Action</th>
                 </tr>
               </thead>
@@ -344,18 +360,20 @@ export default function SalesLogbook() {
                   </tr>
                 ) : salesData.length > 0 ? (
                   salesData.map((row, idx) => {
-                    const saleId = row.SalesId || row.salesId || row.id || `SO-${idx}`;
-                    const customer = row.CustomerName || row.customerName || row.customer || 'N/A';
-                    const branch = row.InventSiteId || row.site || row.branch || 'N/A';
-                    const date = row.OrderDate || row.date || 'N/A';
-                    const status = row.SalesStatus || row.status || 'Pending';
-                    const amount = row.TotalAmount || row.amount || 0;
+                    const saleId = row.SalesId || `SO-${idx}`;
+                    const customer = row.SalesName || 'N/A';
+                    const branch = row.InventSiteId || 'N/A';
+                    const site = row.SalesDistrictDescription || 'N/A';
+                    const delivery = row.HAR_DeliveryDistrictDescription || 'N/A';
+                    const date = row.ShippingDateRequested || 'N/A';
+                    const status = row.DOT_ShowOrderStatus || row.SalesStatus || 'Pending';
+                    const amount = row.HAR_TotalSOAmount || 0;
 
                     return (
                       <tr key={saleId}>
                         <td><strong>{saleId}</strong></td>
                         <td>{customer}</td>
-                        <td>{branch}</td>
+                        <td>{branch} - {site}</td>
                         <td>{date}</td>
                         <td>
                           <span className={`badge ${status.toLowerCase().replace(/\s+/g, '-')}`}>
@@ -366,7 +384,7 @@ export default function SalesLogbook() {
                         <td>
                           <button 
                             className="details-btn"
-                            onClick={() => alert(`Viewing details for invoice: ${saleId}`)}
+                            onClick={() => alert(`Viewing details for order: ${saleId}`)}
                           >
                             See Details
                           </button>
@@ -388,7 +406,7 @@ export default function SalesLogbook() {
           {/* Pagination Controls Footer */}
           <div className="pagination-bar">
             <div className="pagination-info">
-              Showing page <strong>{currentPage}</strong> of <strong>{totalPages}</strong> (Max 100 pages view)
+              Showing page <strong>{currentPage}</strong> of <strong>{totalPages}</strong> (Total: {totalCount} records)
             </div>
 
             <div className="pagination-controls">
@@ -400,7 +418,7 @@ export default function SalesLogbook() {
                 onChange={handleItemsPerPageChange}
               >
                 <option value={10}>10</option>
-                <option value={25}>25 (Default)</option>
+                <option value={25}>25</option>
                 <option value={50}>50</option>
                 <option value={100}>100</option>
               </select>

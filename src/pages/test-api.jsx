@@ -7,7 +7,7 @@ export default function TestApi() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
-  const [pageSize] = useState(20); 
+  const [pageSize] = useState(4); // 4 items per page fits the 2x2 grid view perfectly
 
   useEffect(() => {
     let isMounted = true;
@@ -17,7 +17,6 @@ export default function TestApi() {
     getSalesOrders({ page, pageSize })
       .then((res) => {
         if (isMounted) {
-          // Based on API specification: returns { summary, data } or array depending on response structure
           setOrders(res.data || res);
           setSummary(res.summary || null);
           setLoading(false);
@@ -46,29 +45,42 @@ export default function TestApi() {
 
         .api-header {
           display: flex;
-          justify-content: space-between;
-          align-items: center;
+          flex-direction: column;
+          gap: 8px;
         }
 
         .api-header h2 {
           font-size: 1.4rem;
           color: #0f172a;
+          margin: 0;
         }
 
-        /* 2x2 Grid Container Layout */
+        .summary-bar {
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 8px;
+          padding: 12px 16px;
+          font-size: 0.85rem;
+          color: #334155;
+          display: flex;
+          gap: 16px;
+          flex-wrap: wrap;
+        }
+
+        /* 2x2 Grid Layout */
         .grid-2x2 {
           display: grid;
           grid-template-columns: repeat(2, minmax(0, 1fr));
           gap: 20px;
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 900px) {
           .grid-2x2 {
             grid-template-columns: 1fr;
           }
         }
 
-        /* Individual Card Container */
+        /* Card Container */
         .order-card {
           background: #ffffff;
           border: 1px solid #e2e8f0;
@@ -77,27 +89,24 @@ export default function TestApi() {
           box-shadow: 0 1px 3px rgba(0,0,0,0.02);
           display: flex;
           flex-direction: column;
-          gap: 12px;
-          transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .order-card:hover {
-          box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+          gap: 16px;
         }
 
         .card-top-row {
           display: flex;
           justify-content: space-between;
           align-items: center;
+          border-bottom: 2px solid #f1f5f9;
+          padding-bottom: 10px;
         }
 
         .sale-id {
           font-weight: 700;
-          color: #1e293b;
-          font-size: 1.05rem;
+          color: #0f172a;
+          font-size: 1.1rem;
         }
 
-        /* Status styling based on value */
+        /* Status Styling */
         .status-badge {
           padding: 4px 10px;
           border-radius: 9999px;
@@ -106,36 +115,47 @@ export default function TestApi() {
           text-transform: uppercase;
         }
 
-        .status-pending {
-          background-color: #fef3c7;
-          color: #92400e;
-        }
+        .status-open { background-color: #dbeafe; color: #1e40af; }
+        .status-invoiced { background-color: #d1fae5; color: #065f46; }
+        .status-cancelled { background-color: #fee2e2; color: #991b1b; }
+        .status-delivered { background-color: #e0e7ff; color: #3730a3; }
 
-        .status-delivered, .status-open {
-          background-color: #d1fae5;
-          color: #065f46;
-        }
-
-        .status-cancelled {
-          background-color: #fee2e2;
-          color: #991b1b;
-        }
-
-        .card-body-info {
+        /* Schema Field Groups */
+        .attr-group {
           display: flex;
           flex-direction: column;
           gap: 6px;
-          font-size: 0.9rem;
+          background: #f8fafc;
+          padding: 12px;
+          border-radius: 6px;
+          border: 1px solid #f1f5f9;
+        }
+
+        .group-title {
+          font-size: 0.75rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          color: #64748b;
+          margin-bottom: 4px;
+        }
+
+        .attr-row {
+          display: flex;
+          justify-content: space-between;
+          font-size: 0.85rem;
           color: #475569;
-          border-top: 1px solid #f1f5f9;
-          padding-top: 10px;
+          gap: 8px;
         }
 
-        .card-body-info span strong {
-          color: #1e293b;
+        .attr-row span.val {
+          font-weight: 600;
+          color: #0f172a;
+          text-align: right;
+          word-break: break-all;
         }
 
-        /* Loading and Error States */
+        /* States & Buttons */
         .state-box {
           background: #ffffff;
           border: 1px solid #e2e8f0;
@@ -143,7 +163,6 @@ export default function TestApi() {
           border-radius: 8px;
           text-align: center;
           color: #64748b;
-          font-size: 1rem;
         }
 
         .error-box {
@@ -154,7 +173,6 @@ export default function TestApi() {
           border-radius: 8px;
         }
 
-        /* Pagination bar for test view */
         .test-pagination {
           display: flex;
           justify-content: center;
@@ -185,7 +203,18 @@ export default function TestApi() {
 
       <div className="test-api-container">
         <div className="api-header">
-          <h2>Sales Orders API Integration Test (2x2 Grid View)</h2>
+          <h2>Sales Orders API Schema Test (All Attributes)</h2>
+          
+          {summary && (
+            <div className="summary-bar">
+              <span><strong>Total Orders:</strong> {summary.total_orders}</span>
+              <span><strong>Open:</strong> {summary.open_orders}</span>
+              <span><strong>Invoiced:</strong> {summary.invoiced_orders}</span>
+              <span><strong>Delivered:</strong> {summary.delivered_orders}</span>
+              <span><strong>Cancelled:</strong> {summary.cancelled_orders}</span>
+              <span><strong>Total Value:</strong> RM {summary.total_order_value?.toLocaleString()}</span>
+            </div>
+          )}
         </div>
 
         {/* Loading State */}
@@ -202,42 +231,88 @@ export default function TestApi() {
           </div>
         )}
 
-        {/* Data Display - 2x2 Grid */}
+        {/* 2x2 Grid Display showing ALL schema attributes */}
         {!loading && !error && (
           <>
             <div className="grid-2x2">
-              {orders.map((order, idx) => {
-                // Handling alternate property mappings depending on exact mock api schema keys
-                const saleId = order.SalesId || order.salesId || order.id || `SO-${idx}`;
-                const customerName = order.CustomerName || order.customerName || order.customer || 'Unknown Customer'; //
-                const status = order.SalesStatus || order.status || order.siteStatus || 'Pending';
-                const siteId = order.InventSiteId || order.site || order.branch || 'N/A';
-                const amount = order.TotalAmount || order.amount || 0;
-
-                const statusClass = status.toLowerCase().includes('pend') 
-                  ? 'status-pending' 
-                  : status.toLowerCase().includes('canc') 
-                  ? 'status-cancelled' 
+              {orders.map((order) => {
+                const status = order.DOT_ShowOrderStatus || order.SalesStatus || 'Open order';
+                const statusClass = status.toLowerCase().includes('open')
+                  ? 'status-open'
+                  : status.toLowerCase().includes('inv')
+                  ? 'status-invoiced'
+                  : status.toLowerCase().includes('canc')
+                  ? 'status-cancelled'
                   : 'status-delivered';
 
                 return (
-                  <div key={saleId} className="order-card">
+                  <div key={order.SalesId} className="order-card">
+                    {/* Header */}
                     <div className="card-top-row">
-                      <span className="sale-id">{saleId}</span>
+                      <span className="sale-id">{order.SalesId}</span>
                       <span className={`status-badge ${statusClass}`}>{status}</span>
                     </div>
 
-                    <div className="card-body-info">
-                      <span>Customer Name: <strong>{customerName}</strong></span>
-                      <span>Branch / Site: <strong>{siteId}</strong></span>
-                      <span>Total Value: <strong>${Number(amount).toLocaleString()}</strong></span>
+                    {/* Group 1: General & Customer Info */}
+                    <div className="attr-group">
+                      <div className="group-title">1. General & Customer</div>
+                      <div className="attr-row"><span>SalesName:</span><span className="val">{order.SalesName}</span></div>
+                      <div className="attr-row"><span>CustAccount:</span><span className="val">{order.CustAccount}</span></div>
+                      <div className="attr-row"><span>SalesTaker:</span><span className="val">{order.SalesTaker}</span></div>
+                      <div className="attr-row"><span>CustomerRef:</span><span className="val">{order.CustomerRef}</span></div>
+                      <div className="attr-row"><span>SalesType:</span><span className="val">{order.SalesType}</span></div>
+                      <div className="attr-row"><span>PurchOrderFormNum:</span><span className="val">{order.PurchOrderFormNum}</span></div>
+                    </div>
+
+                    {/* Group 2: Organization & Grouping */}
+                    <div className="attr-group">
+                      <div className="group-title">2. Site & Classification</div>
+                      <div className="attr-row"><span>InventSiteId:</span><span className="val">{order.InventSiteId}</span></div>
+                      <div className="attr-row"><span>DOT_ItemGroupId:</span><span className="val">{order.DOT_ItemGroupId}</span></div>
+                      <div className="attr-row"><span>SalesGroup:</span><span className="val">{order.SalesGroup}</span></div>
+                    </div>
+
+                    {/* Group 3: Financial Amounts */}
+                    <div className="attr-group">
+                      <div className="group-title">3. Financial Breakdown</div>
+                      <div className="attr-row"><span>HAR_TotalSOAmount:</span><span className="val">RM {order.HAR_TotalSOAmount?.toFixed(2)}</span></div>
+                      <div className="attr-row"><span>HAR_InvoicedAmount:</span><span className="val">RM {order.HAR_InvoicedAmount?.toFixed(2)}</span></div>
+                      <div className="attr-row"><span>HAR_BalanceAmount:</span><span className="val">RM {order.HAR_BalanceAmount?.toFixed(2)}</span></div>
+                    </div>
+
+                    {/* Group 4: Statuses */}
+                    <div className="attr-group">
+                      <div className="group-title">4. Document & Status Flags</div>
+                      <div className="attr-row"><span>SalesStatus:</span><span className="val">{order.SalesStatus}</span></div>
+                      <div className="attr-row"><span>DocumentStatus:</span><span className="val">{order.DocumentStatus}</span></div>
+                      <div className="attr-row"><span>DOT_ValidationStatus:</span><span className="val">{order.DOT_ValidationStatus}</span></div>
+                      <div className="attr-row"><span>ReleaseStatus:</span><span className="val">{order.ReleaseStatus}</span></div>
+                      <div className="attr-row"><span>MCROrderStopped:</span><span className="val">{order.MCROrderStopped}</span></div>
+                    </div>
+
+                    {/* Group 5: District & Delivery */}
+                    <div className="attr-group">
+                      <div className="group-title">5. Location & Delivery</div>
+                      <div className="attr-row"><span>SalesDistrictDescription:</span><span className="val">{order.SalesDistrictDescription}</span></div>
+                      <div className="attr-row"><span>HAR_SalesDeliveryDistrictId:</span><span className="val">{order.HAR_SalesDeliveryDistrictId}</span></div>
+                      <div className="attr-row"><span>HAR_DeliveryDistrictDescription:</span><span className="val">{order.HAR_DeliveryDistrictDescription}</span></div>
+                    </div>
+
+                    {/* Group 6: Dates & Notes */}
+                    <div className="attr-group">
+                      <div className="group-title">6. Dates & Notes</div>
+                      <div className="attr-row"><span>ShippingDateRequested:</span><span className="val">{order.ShippingDateRequested}</span></div>
+                      <div className="attr-row"><span>CreatedDateTime1:</span><span className="val">{order.CreatedDateTime1}</span></div>
+                      <div className="attr-row"><span>ModifiedDateTime1:</span><span className="val">{order.ModifiedDateTime1}</span></div>
+                      <div className="attr-row"><span>DOT_SONotes:</span><span className="val">{order.DOT_SONotes || 'null'}</span></div>
+                      <div className="attr-row"><span>DOT_SFANotes:</span><span className="val">{order.DOT_SFANotes || 'null'}</span></div>
                     </div>
                   </div>
                 );
               })}
             </div>
 
-            {/* Pagination for the test page view */}
+            {/* Pagination Controls */}
             <div className="test-pagination">
               <button 
                 className="test-btn" 
@@ -247,11 +322,12 @@ export default function TestApi() {
                 Previous Page
               </button>
               <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#475569' }}>
-                Current Page: {page}
+                Page {page} of {summary ? summary.totalPages : '?'}
               </span>
               <button 
                 className="test-btn" 
                 onClick={() => setPage((p) => p + 1)}
+                disabled={summary && page >= summary.totalPages}
               >
                 Next Page
               </button>
