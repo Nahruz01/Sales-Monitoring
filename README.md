@@ -6,10 +6,10 @@ A high-performance React-based sales analytics dashboard featuring integrated KP
 
 ## 🚀 Features
 
-- **Dynamic KPI Cards with Progress Bars**: Visualizes total sales volume, invoiced amounts, and remaining balance amounts (`HAR_BalanceAmount`) broken down across order statuses (Delivered, Invoiced, Pending, Cancelled)[cite: 1].
-- **Multi-Page Recursive Data Fetcher**: Bypasses backend pagination limits (`pageSize: 100`) to compute accurate full-dataset global sums and analytics[cite: 1].
+- **Dynamic KPI Cards with Progress Bars**: Visualizes total sales volume, invoiced amounts, and remaining balance amounts (`HAR_BalanceAmount`) broken down across order statuses (Delivered, Invoiced, Pending, Cancelled).
+- **Multi-Page Recursive Data Fetcher**: Bypasses backend pagination limits (`pageSize: 100`) to compute accurate full-dataset global sums and analytics.
 - **Advanced Filtering**: Filter records dynamically by **Timeline (Start/End Date)**, **Branch/Site** (fetched dynamically from `/meta`), and **Order Status**.
-- **Interactive Sales Logbook & Modal Detail Viewer**: Paginated table view with search functionality and a detailed inspector modal that fetches single-order records via `GET /sales-orders/{salesId}`[cite: 1, 6].
+- **Interactive Sales Logbook & Modal Detail Viewer**: Paginated table view with search functionality and a detailed inspector modal that fetches single-order records via `GET /sales-orders/{salesId}`
 
 ---
 
