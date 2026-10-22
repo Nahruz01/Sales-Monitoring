@@ -2,6 +2,8 @@
 
 A high-performance React-based sales analytics dashboard featuring integrated KPI cards, multi-parameter filtering (timeline, site/branch, and status), server-side synchronized data visualization, and an interactive sales logbook with full-schema modal inspection.
 
+**Live Public URL: https://sales-monitoring-delta.vercel.app/**
+
 ---
 
 ## 🚀 Features
