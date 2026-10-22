@@ -4,6 +4,8 @@ A high-performance React-based sales analytics dashboard featuring integrated KP
 
 **Live Public URL: https://sales-monitoring-delta.vercel.app/**
 
+**Documentation: https://docs.google.com/document/d/1mtKTDy1Jo7AHplSif6-tTLXxEDfLFs2DM91sFtTl8mU/edit?usp=sharing**
+
 ---
 
 ## 🚀 Features
