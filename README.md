@@ -26,5 +26,5 @@ A high-performance React-based sales analytics dashboard featuring integrated KP
 
 1. **Clone the repository:**
    ```bash
-git clone https://github.com/Nahruz01/Sales-Monitoring.git
-cd Sales-Monitoring
+   git clone https://github.com/Nahruz01/Sales-Monitoring.git
+   cd Sales-Monitoring
