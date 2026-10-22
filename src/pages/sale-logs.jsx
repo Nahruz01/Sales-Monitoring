@@ -55,13 +55,26 @@ export default function SalesLogbook() {
     if (searchQuery.trim()) params.q = searchQuery.trim();
     if (selectedBranch !== 'All') params.site = selectedBranch;
     if (selectedStatus !== 'All') params.status = selectedStatus;
-    if (startDate) params.startDate = startDate;
-    if (endDate) params.endDate = endDate;
 
     getSalesOrders(params)
       .then((res) => {
         if (isMounted) {
-          const items = res.data || [];
+          let items = res.data || [];
+
+          // Apply Client-Side Timeline Filter for the active view
+          if (startDate || endDate) {
+            items = items.filter((item) => {
+              const orderDateStr = item.ShippingDateRequested || item.CreatedDateTime1;
+              if (!orderDateStr) return false;
+
+              const orderDate = new Date(orderDateStr.split('T')[0]);
+              if (startDate && orderDate < new Date(startDate)) return false;
+              if (endDate && orderDate > new Date(endDate)) return false;
+
+              return true;
+            });
+          }
+
           setSalesData(items);
           setTotalCount(res.total || items.length);
           setTotalPages(res.totalPages || Math.ceil((res.total || items.length) / itemsPerPage) || 1);

@@ -59,126 +59,141 @@ export default function SalesVisualization() {
 
   // 2. Fetch all pages recursively and calculate metrics with applied filters
   const fetchAllOrdersAndCalculate = async () => {
-    setLoading(true);
-    setError(null);
+      setLoading(true);
+      setError(null);
 
-    try {
-      const baseParams = { pageSize: 100 }; // Max items per request allowed by server
-      if (startDate) baseParams.startDate = startDate;
-      if (endDate) baseParams.endDate = endDate;
+      try {
+        const baseParams = { pageSize: 100 };
 
-      // If a specific branch is selected, pass the site parameter
-      if (selectedBranch && selectedBranch !== 'All') {
-        baseParams.site = selectedBranch.trim();
-      }
-
-      // a. Fetch page 1 first to know total pages
-      const firstPageRes = await getSalesOrders({ ...baseParams, page: 1 });
-      let allItems = firstPageRes.data || [];
-      const totalPages = firstPageRes.totalPages || 1;
-
-      // b. If there are multiple pages, fetch the rest in parallel
-      if (totalPages > 1) {
-        const pagePromises = [];
-        for (let p = 2; p <= totalPages; p++) {
-          pagePromises.push(getSalesOrders({ ...baseParams, page: p }));
+        // Pass branch/site parameter to the API if selected
+        if (selectedBranch && selectedBranch !== 'All') {
+          baseParams.site = selectedBranch.trim();
         }
 
-        const remainingResponses = await Promise.all(pagePromises);
-        remainingResponses.forEach((res) => {
-          if (res.data) {
-            allItems = allItems.concat(res.data);
+        // a. Fetch page 1 first to know total pages
+        const firstPageRes = await getSalesOrders({ ...baseParams, page: 1 });
+        let allItems = firstPageRes.data || [];
+        const totalPages = firstPageRes.totalPages || 1;
+
+        // b. Fetch the rest of the pages in parallel if needed
+        if (totalPages > 1) {
+          const pagePromises = [];
+          for (let p = 2; p <= totalPages; p++) {
+            pagePromises.push(getSalesOrders({ ...baseParams, page: p }));
+          }
+
+          const remainingResponses = await Promise.all(pagePromises);
+          remainingResponses.forEach((res) => {
+            if (res.data) {
+              allItems = allItems.concat(res.data);
+            }
+          });
+        }
+
+        // c. Apply Client-Side Timeline Filtering (if dates are provided)
+        let filteredItems = allItems;
+        if (startDate || endDate) {
+          filteredItems = allItems.filter((item) => {
+            // Use ShippingDateRequested (or CreatedDateTime1 depending on your preference)
+            const orderDateStr = item.ShippingDateRequested || item.CreatedDateTime1;
+            if (!orderDateStr) return false;
+
+            const orderDate = new Date(orderDateStr.split('T')[0]); // Normalize to YYYY-MM-DD
+            
+            if (startDate && orderDate < new Date(startDate)) return false;
+            if (endDate && orderDate > new Date(endDate)) return false;
+            
+            return true;
+          });
+        }
+
+        // d. Perform calculations on the fully filtered dataset
+        let totalValue = 0;
+        let totalInvoiced = 0;
+        let totalBalance = 0;
+
+        let deliveredCount = 0;
+        let deliveredTotal = 0;
+        let deliveredInvoiced = 0;
+        let deliveredBalance = 0;
+        
+        let invoicedCount = 0;
+        let invoicedTotal = 0;
+        let invoicedInvoiced = 0;
+        let invoicedBalance = 0;
+
+        let pendingCount = 0;
+        let pendingTotal = 0;
+        let pendingInvoiced = 0;
+        let pendingBalance = 0;
+
+        let cancelledCount = 0;
+        let cancelledTotal = 0;
+        let cancelledInvoiced = 0;
+        let cancelledBalance = 0;
+
+        filteredItems.forEach((item) => {
+          const status = (item.DOT_ShowOrderStatus || item.SalesStatus || '').toLowerCase();
+          const totalAmount = item.HAR_TotalSOAmount || 0;
+          const invoicedAmount = item.HAR_InvoicedAmount || 0;
+          const balanceAmount = item.HAR_BalanceAmount || 0;
+
+          totalValue += totalAmount;
+          totalInvoiced += invoicedAmount;
+          totalBalance += balanceAmount;
+
+          if (status.includes('delivered')) {
+            deliveredCount += 1;
+            deliveredTotal += totalAmount;
+            deliveredInvoiced += invoicedAmount;
+            deliveredBalance += balanceAmount;
+          } else if (status.includes('invoiced')) {
+            invoicedCount += 1;
+            invoicedTotal += totalAmount;
+            invoicedInvoiced += invoicedAmount;
+            invoicedBalance += balanceAmount;
+          } else if (status.includes('cancelled')) {
+            cancelledCount += 1;
+            cancelledTotal += totalAmount;
+            cancelledInvoiced += invoicedAmount;
+            cancelledBalance += balanceAmount;
+          } else {
+            pendingCount += 1;
+            pendingTotal += totalAmount;
+            pendingInvoiced += invoicedAmount;
+            pendingBalance += balanceAmount;
           }
         });
+
+        setKpiData({
+          totalCount: filteredItems.length,
+          totalValue,
+          totalInvoiced,
+          totalBalance,
+          deliveredCount,
+          deliveredTotal,
+          deliveredInvoiced,
+          deliveredBalance,
+          invoicedCount,
+          invoicedTotal,
+          invoicedInvoiced,
+          invoicedBalance,
+          pendingCount,
+          pendingTotal,
+          pendingInvoiced,
+          pendingBalance,
+          cancelledCount,
+          cancelledTotal,
+          cancelledInvoiced,
+          cancelledBalance,
+        });
+
+        setLoading(false);
+      } catch (err) {
+        setError(err.message);
+        setLoading(false);
       }
-
-      // c. Perform calculations on the complete dataset
-      let totalValue = 0;
-      let totalInvoiced = 0;
-      let totalBalance = 0;
-
-      let deliveredCount = 0;
-      let deliveredTotal = 0;
-      let deliveredInvoiced = 0;
-      let deliveredBalance = 0;
-      
-      let invoicedCount = 0;
-      let invoicedTotal = 0;
-      let invoicedInvoiced = 0;
-      let invoicedBalance = 0;
-
-      let pendingCount = 0;
-      let pendingTotal = 0;
-      let pendingInvoiced = 0;
-      let pendingBalance = 0;
-
-      let cancelledCount = 0;
-      let cancelledTotal = 0;
-      let cancelledInvoiced = 0;
-      let cancelledBalance = 0;
-
-      allItems.forEach((item) => {
-        const status = (item.DOT_ShowOrderStatus || item.SalesStatus || '').toLowerCase();
-        const totalAmount = item.HAR_TotalSOAmount || 0;
-        const invoicedAmount = item.HAR_InvoicedAmount || 0;
-        const balanceAmount = item.HAR_BalanceAmount || 0;
-
-        totalValue += totalAmount;
-        totalInvoiced += invoicedAmount;
-        totalBalance += balanceAmount;
-
-        if (status.includes('delivered')) {
-          deliveredCount += 1;
-          deliveredTotal += totalAmount;
-          deliveredInvoiced += invoicedAmount;
-          deliveredBalance += balanceAmount;
-        } else if (status.includes('invoiced')) {
-          invoicedCount += 1;
-          invoicedTotal += totalAmount;
-          invoicedInvoiced += invoicedAmount;
-          invoicedBalance += balanceAmount;
-        } else if (status.includes('cancelled')) {
-          cancelledCount += 1;
-          cancelledTotal += totalAmount;
-          cancelledInvoiced += invoicedAmount;
-          cancelledBalance += balanceAmount;
-        } else {
-          pendingCount += 1;
-          pendingTotal += totalAmount;
-          pendingInvoiced += invoicedAmount;
-          pendingBalance += balanceAmount;
-        }
-      });
-
-      setKpiData({
-        totalCount: allItems.length,
-        totalValue,
-        totalInvoiced,
-        totalBalance,
-        deliveredCount,
-        deliveredTotal,
-        deliveredInvoiced,
-        deliveredBalance,
-        invoicedCount,
-        invoicedTotal,
-        invoicedInvoiced,
-        invoicedBalance,
-        pendingCount,
-        pendingTotal,
-        pendingInvoiced,
-        pendingBalance,
-        cancelledCount,
-        cancelledTotal,
-        cancelledInvoiced,
-        cancelledBalance,
-      });
-
-      setLoading(false);
-    } catch (err) {
-      setError(err.message);
-      setLoading(false);
-    }
-  };
+    };
 
   // Initial load
   useEffect(() => {
