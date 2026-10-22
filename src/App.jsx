@@ -1,13 +1,15 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Sidebar from './layouts/sidebar';
-import SalesVisualization from './pages/sale-visualization'; // Import your component
+import SalesVisualization from './pages/sale-visualization';
+import SalesLog from './pages/sale-logs';
+import TestApi from './pages/test-api';
 
 export default function App() {
   return (
     <BrowserRouter>
       <Sidebar>
-        
+
         <Routes>
           {/* Put SalesVisualization inside the Dashboard route */}
           <Route 
@@ -20,8 +22,8 @@ export default function App() {
               </div>
             } 
           />
-          <Route path="/saleslog" element={<h2>Sales Log Table</h2>} />
-          <Route path="/test-api" element={<h2>API Testing Panel</h2>} />
+          <Route path="/saleslog" element={<SalesLog />} />
+          <Route path="/test-api" element={<TestApi />} />
         </Routes>
       </Sidebar>
     </BrowserRouter>
