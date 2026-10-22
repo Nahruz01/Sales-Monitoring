@@ -1,5 +1,5 @@
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
-const ASSESSMENT_KEY = import.meta.env.VITE_ASSESSMENT_KEY;
+const BASE_URL = "https://hiring.harrisons.my/api/mock/sales-orders"
+const ASSESSMENT_KEY = "hssb-assessment-mock-2026"
 
 // Helper function to handle common headers
 const getHeaders = () => ({
