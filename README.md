@@ -1,19 +1,30 @@
-# React + Vite
+# HSSB Sales Analytics & Monitoring Dashboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A high-performance React-based sales analytics dashboard featuring integrated KPI cards, multi-parameter filtering (timeline, site/branch, and status), server-side synchronized data visualization, and an interactive sales logbook with full-schema modal inspection.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🚀 Features
 
-## React Compiler
+- **Dynamic KPI Cards with Progress Bars**: Visualizes total sales volume, invoiced amounts, and remaining balance amounts (`HAR_BalanceAmount`) broken down across order statuses (Delivered, Invoiced, Pending, Cancelled)[cite: 1].
+- **Multi-Page Recursive Data Fetcher**: Bypasses backend pagination limits (`pageSize: 100`) to compute accurate full-dataset global sums and analytics[cite: 1].
+- **Advanced Filtering**: Filter records dynamically by **Timeline (Start/End Date)**, **Branch/Site** (fetched dynamically from `/meta`), and **Order Status**.
+- **Interactive Sales Logbook & Modal Detail Viewer**: Paginated table view with search functionality and a detailed inspector modal that fetches single-order records via `GET /sales-orders/{salesId}`[cite: 1, 6].
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+---
 
-Note: This will impact Vite dev & build performances.
-You can also try [the experimental native React Compiler support in plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md#rust-react-compiler) by using `compiler: true` in the plugin options instead of using the Babel plugin.
+## 🛠️ Tech Stack
 
-## Expanding the Oxlint configuration
+- **React** (Hooks: `useState`, `useEffect`)
+- **Lucide React** (Modern UI iconography)
+- **CSS-in-JS** (Responsive, standalone style tags)
+- **Fetch API** (Async communication with the HSSB Assessment Backend)
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+---
+
+## 📦 Installation & Local Setup
+
+1. **Clone the repository:**
+   ```bash
+   git clone [<your-public-git-repo-url>](https://github.com/Nahruz01/Sales-Monitoring)
+   cd Sales-Monitoring
